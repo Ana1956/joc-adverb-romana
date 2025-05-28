@@ -1,0 +1,324 @@
+!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jocul Adverbului</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .game-container {
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* More rounded corners */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem; /* Increased padding */
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem; /* Increased gap between sections */
+        }
+        .sentence-display {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 600; /* font-semibold */
+            color: #2d3748; /* Darker text */
+            min-height: 3rem; /* Ensure consistent height */
+        }
+        .sentence-word {
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s, transform 0.2s;
+            display: inline-block; /* Allows padding and margin */
+            margin: 0 0.125rem; /* Small margin between words */
+        }
+        .sentence-word:hover {
+            background-color: #e2e8f0; /* Light gray on hover */
+            transform: translateY(-2px);
+        }
+        .sentence-word.selected {
+            background-color: #a7f3d0; /* Light green for selected adverb */
+            font-weight: 700; /* Bold when selected */
+        }
+        .category-buttons button {
+            background-color: #4299e1; /* Blue */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem; /* Slightly more rounded */
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.2s;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .category-buttons button:hover {
+            background-color: #3182ce; /* Darker blue on hover */
+            transform: translateY(-2px);
+        }
+        .category-buttons button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        .feedback-message {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 600;
+            min-height: 2rem; /* Ensure consistent height */
+        }
+        .feedback-correct {
+            color: #38a169; /* Green */
+        }
+        .feedback-incorrect {
+            color: #e53e3e; /* Red */
+        }
+        .score-display {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700;
+            color: #4a5568; /* Gray */
+        }
+        .restart-button {
+            background-color: #f6ad55; /* Orange */
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.2s;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .restart-button:hover {
+            background-color: #ed8936; /* Darker orange */
+            transform: translateY(-2px);
+        }
+        .restart-button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .game-container {
+                padding: 1.5rem;
+                gap: 1.5rem;
+            }
+            .sentence-display {
+                font-size: 1.5rem; /* text-2xl on small screens */
+            }
+            .category-buttons {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            .category-buttons button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="text-4xl font-bold text-gray-800 mb-4">Jocul Adverbului</h1>
+        <p class="text-lg text-gray-600 mb-6">Identifică adverbul și clasifică-l corect!</p>
+
+        <div id="sentenceDisplay" class="sentence-display mb-8">
+            </div>
+
+        <div id="categoryButtons" class="category-buttons flex justify-center gap-4 mb-6 hidden">
+            <button id="locBtn" class="px-6 py-3">De Loc</button>
+            <button id="timpBtn" class="px-6 py-3">De Timp</button>
+            <button id="modBtn" class="px-6 py-3">De Mod</button>
+        </div>
+
+        <div id="feedbackMessage" class="feedback-message mb-6">
+            </div>
+
+        <div class="score-display">
+            Scor: <span id="score">0</span> / <span id="totalQuestions">0</span>
+        </div>
+
+        <button id="restartButton" class="restart-button mt-8">Reîncepe Jocul</button>
+    </div>
+
+    <script>
+        // Array of sentences with their adverbs and types
+        const sentences = [
+            { text: "El aleargă repede.", adverb: "repede", type: "mod" },
+            { text: "Am fost ieri la cinema.", adverb: "ieri", type: "timp" },
+            { text: "Cartea este aici.", adverb: "aici", type: "loc" },
+            { text: "Vino curând!", adverb: "curând", type: "timp" },
+            { text: "Păsările zboară sus.", adverb: "sus", type: "loc" },
+            { text: "Scrie frumos.", adverb: "frumos", type: "mod" },
+            { text: "Ne vedem mâine.", adverb: "mâine", type: "timp" },
+            { text: "Copiii se joacă afară.", adverb: "afară", type: "loc" },
+            { text: "Vorbește încet.", adverb: "încet", type: "mod" },
+            { text: "Am ajuns târziu.", adverb: "târziu", type: "timp" },
+            { text: "El locuiește departe.", adverb: "departe", type: "loc" },
+            { text: "Câinele latră puternic.", adverb: "puternic", type: "mod" },
+            { text: "Vom pleca acum.", adverb: "acum", type: "timp" },
+            { text: "Stai jos!", adverb: "jos", type: "loc" },
+            { text: "A sosit devreme.", adverb: "devreme", type: "timp" }
+        ];
+
+        let currentSentenceIndex = 0;
+        let score = 0;
+        let selectedAdverbElement = null; // To keep track of the clicked adverb word element
+        let gameStarted = false; // Flag to indicate if the game has started
+
+        // Get DOM elements
+        const sentenceDisplay = document.getElementById('sentenceDisplay');
+        const categoryButtons = document.getElementById('categoryButtons');
+        const locBtn = document.getElementById('locBtn');
+        const timpBtn = document.getElementById('timpBtn');
+        const modBtn = document.getElementById('modBtn');
+        const feedbackMessage = document.getElementById('feedbackMessage');
+        const scoreDisplay = document.getElementById('score');
+        const totalQuestionsDisplay = document.getElementById('totalQuestions');
+        const restartButton = document.getElementById('restartButton');
+
+        // Function to shuffle an array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+            }
+        }
+
+        // Function to display a new sentence
+        function displaySentence() {
+            // Clear previous feedback and selected adverb
+            feedbackMessage.textContent = '';
+            feedbackMessage.className = 'feedback-message mb-6'; // Reset classes
+            categoryButtons.classList.add('hidden');
+            if (selectedAdverbElement) {
+                selectedAdverbElement.classList.remove('selected');
+                selectedAdverbElement = null;
+            }
+
+            // Check if all questions have been answered
+            if (currentSentenceIndex >= sentences.length) {
+                sentenceDisplay.innerHTML = `<p>Jocul s-a terminat! Ai obținut ${score} din ${sentences.length} puncte.</p>`;
+                categoryButtons.classList.add('hidden');
+                restartButton.style.display = 'block'; // Show restart button
+                gameStarted = false;
+                return;
+            }
+
+            const currentSentence = sentences[currentSentenceIndex];
+            const words = currentSentence.text.split(' ');
+            sentenceDisplay.innerHTML = ''; // Clear previous sentence
+
+            // Create clickable spans for each word
+            words.forEach((word, index) => {
+                const span = document.createElement('span');
+                span.textContent = word;
+                span.classList.add('sentence-word');
+                span.dataset.word = word.replace(/[.,!?;:]$/, ''); // Remove punctuation for comparison
+                span.dataset.index = index; // Store original index for uniqueness
+                span.addEventListener('click', handleWordClick);
+                sentenceDisplay.appendChild(span);
+                // Add a non-breaking space after each word except the last one
+                if (index < words.length - 1) {
+                    sentenceDisplay.appendChild(document.createTextNode(' '));
+                }
+            });
+        }
+
+        // Handle click on a word in the sentence
+        function handleWordClick(event) {
+            // Only allow selecting a word if no adverb is currently selected
+            if (selectedAdverbElement) {
+                feedbackMessage.textContent = 'Ai selectat deja un cuvânt. Alege categoria!';
+                feedbackMessage.classList.add('feedback-incorrect');
+                return;
+            }
+
+            const clickedWord = event.target.dataset.word.toLowerCase();
+            const currentAdverb = sentences[currentSentenceIndex].adverb.toLowerCase();
+
+            // Check if the clicked word is the adverb
+            if (clickedWord === currentAdverb) {
+                selectedAdverbElement = event.target;
+                selectedAdverbElement.classList.add('selected');
+                feedbackMessage.textContent = 'Acum alege felul adverbului.';
+                feedbackMessage.classList.remove('feedback-incorrect');
+                feedbackMessage.classList.add('feedback-correct');
+                categoryButtons.classList.remove('hidden'); // Show category buttons
+            } else {
+                feedbackMessage.textContent = 'Greșit! Încearcă din nou.';
+                feedbackMessage.classList.remove('feedback-correct');
+                feedbackMessage.classList.add('feedback-incorrect');
+                // Optionally, add a temporary visual cue for incorrect selection
+                event.target.classList.add('bg-red-200');
+                setTimeout(() => {
+                    event.target.classList.remove('bg-red-200');
+                }, 700);
+            }
+        }
+
+        // Handle click on a category button
+        function handleCategoryClick(selectedType) {
+            if (!selectedAdverbElement) {
+                feedbackMessage.textContent = 'Mai întâi, selectează adverbul din propoziție!';
+                feedbackMessage.classList.add('feedback-incorrect');
+                return;
+            }
+
+            const currentAdverbType = sentences[currentSentenceIndex].type;
+
+            if (selectedType === currentAdverbType) {
+                score++;
+                feedbackMessage.textContent = 'Corect! Felicitări!';
+                feedbackMessage.classList.remove('feedback-incorrect');
+                feedbackMessage.classList.add('feedback-correct');
+            } else {
+                feedbackMessage.textContent = `Greșit! Răspunsul corect era: ${currentAdverbType.charAt(0).toUpperCase() + currentAdverbType.slice(1)}.`;
+                feedbackMessage.classList.remove('feedback-correct');
+                feedbackMessage.classList.add('feedback-incorrect');
+            }
+
+            // Update score display
+            scoreDisplay.textContent = score;
+
+            // Move to the next question after a short delay
+            setTimeout(() => {
+                currentSentenceIndex++;
+                displaySentence();
+            }, 1500); // 1.5 seconds delay
+        }
+
+        // Initialize game
+        function initializeGame() {
+            shuffleArray(sentences); // Randomize sentence order
+            currentSentenceIndex = 0;
+            score = 0;
+            scoreDisplay.textContent = score;
+            totalQuestionsDisplay.textContent = sentences.length;
+            restartButton.style.display = 'none'; // Hide restart button initially
+            gameStarted = true;
+            displaySentence();
+        }
+
+        // Event listeners for category buttons
+        locBtn.addEventListener('click', () => handleCategoryClick('loc'));
+        timpBtn.addEventListener('click', () => handleCategoryClick('timp'));
+        modBtn.addEventListener('click', () => handleCategoryClick('mod'));
+
+        // Event listener for restart button
+        restartButton.addEventListener('click', initializeGame);
+
+        // Start the game when the page loads
+        window.onload = initializeGame;
+    </script>
+</body>
+</html>
